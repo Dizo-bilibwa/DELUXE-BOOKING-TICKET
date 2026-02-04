@@ -54,7 +54,7 @@ class Booking(models.Model):
     total_amount = models.IntegerField()
 
     def __str__(self):
-        return f"booking #{self.id} - {self.user.username}"
+        return f"booking {self.id} - {self.user.username}"
     
 
 class Ticket(models.Model):
