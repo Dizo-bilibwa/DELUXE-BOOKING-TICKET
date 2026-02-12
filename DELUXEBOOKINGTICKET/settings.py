@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,9 +25,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-2d-#pgzk$^(z&2qe#v4jc6@6^4i#ts)usu999x_h)nr(r1ce2)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
+
 
 
 # Application definition
@@ -82,16 +85,14 @@ WSGI_APPLICATION = 'DELUXEBOOKINGTICKET.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+
+import dj_database_url
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'DELUXEBOOKINGTICKET',
-        'USER': 'postgres',
-        'PASSWORD': '1245',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL')),
+        }
+        
+
 
 
 # Password validation
@@ -131,7 +132,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 
-
+import os
 
 from datetime import timedelta
 
@@ -156,5 +157,6 @@ CSRF_TRUSTED_ORIGINS = [
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 
