@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+const API_BASE = process.env.REACT_APP_API_URL || "";
 
 function Login() {
   const [username, setUsername] = useState("");
@@ -17,7 +18,7 @@ function Login() {
     setLoading(true);
     setMessage("");
 
-    fetch("/api/token/", {
+    fetch(`${API_BASE}/api/token/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),

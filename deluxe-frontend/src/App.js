@@ -5,6 +5,7 @@ import Booking from "./Booking";
 import ProtectedRoute from "./ProtectedRoute";
 import Navigation from "./components/Navigation";
 import { useEffect, useState } from "react";
+const API_BASE = process.env.REACT_APP_API_URL || "";
 
 function RoutesList() {
   const [routes, setRoutes] = useState([]);
@@ -13,7 +14,7 @@ function RoutesList() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/routes/")
+    fetch(`${API_BASE}/api/routes/`)
       .then(res => {
         if (!res.ok) {
           throw new Error("Failed to fetch routes");

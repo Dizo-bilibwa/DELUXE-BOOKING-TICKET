@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Payment from "./Payment";
+const API_BASE = process.env.REACT_APP_API_URL || "";
 
 function Booking() {
   const [travelDates, setTravelDates] = useState([]);
@@ -16,7 +17,7 @@ function Booking() {
 
   // Fetch travel dates
   useEffect(() => {
-    fetch("/api/travel-dates/")
+    fetch(`${API_BASE}/api/travel-dates/`)
       .then(res => {
         if (!res.ok) throw new Error("Failed to fetch travel dates");
         return res.json();
@@ -31,7 +32,7 @@ function Booking() {
 
   // Fetch ticket classes
   useEffect(() => {
-    fetch("/api/ticket-classes/")
+    fetch(`${API_BASE}/api/ticket-classes/`)
       .then(res => {
         if (!res.ok) throw new Error("Failed to fetch ticket classes");
         return res.json();
@@ -57,7 +58,7 @@ function Booking() {
       return;
     }
 
-    fetch("/api/book/", {
+    fetch(`${API_BASE}/api/book/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

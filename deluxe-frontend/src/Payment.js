@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+const API_BASE = process.env.REACT_APP_API_URL || "";
 
 function Payment({ bookingId, amount, ticketNumber }) {
   const [phone, setPhone] = useState("");
@@ -19,7 +20,7 @@ function Payment({ bookingId, amount, ticketNumber }) {
     setLoading(true);
     setMessage("");
 
-    fetch(`/api/pay/${bookingId}/`, {
+    fetch(`${API_BASE}/api/pay/${bookingId}/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -55,7 +56,7 @@ function Payment({ bookingId, amount, ticketNumber }) {
 
   const handleDownloadPDF = () => {
     // Open PDF in new tab
-    window.open(`/api/ticket/pdf/${ticketNumber}/`, '_blank');
+    window.open(`${API_BASE}/api/ticket/pdf/${ticketNumber}/`, '_blank');
   };
 
   // Success view - shows after successful payment
