@@ -1,31 +1,25 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Route, Train, TravelDate, TicketClass, Booking, Ticket
-from .models import Booking
+from .models import Route, Train, TravelDate, TicketClass, Booking, Ticket, Payment
+from django.contrib.auth import authenticate
+
 
 class RouteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Route
         fields = '__all__'
 
+
 class TrainSerializer(serializers.ModelSerializer):
     class Meta:
         model = Train
         fields = '__all__'
 
+
 class TravelDateSerializer(serializers.ModelSerializer):  
     class Meta:
         model = TravelDate
         fields = '__all__'
-
-class BookingSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Booking
-        fields = '__all__'
-
-
-
-
 
 
 class TicketClassSerializer(serializers.ModelSerializer):
@@ -34,32 +28,26 @@ class TicketClassSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    password = serializers.CharField(write_only=True)
-
-
-
-
-
-
-class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
-
+class BookingSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
-        fields =['username','email','password']
-
-        def create (self, validated_data):
-            User = User.objects.create_user(username=validated_data['username'],email =validated_data['email'],
-                                            password=validated_data['password'])
-            return User
-
-
-
-from django.contrib.auth import authenticate
-from django.contrib.auth.models import User
-from rest_framework import serializers
+        model = Booking
+        fields = ['travel_date', 'ticket_class', 'seats']
+    
+    def create(self, validated_data):
+        # Get the user from the request context
+        user = self.context['request'].user
+        ticket_class = validated_data['ticket_class']
+        seats = validated_data.get('seats', 1)
+        total_amount = ticket_class.price * seats
+        
+        booking = Booking.objects.create(
+            user=user,
+            travel_date=validated_data['travel_date'],
+            ticket_class=ticket_class,
+            seats=seats,
+            total_amount=total_amount
+        )
+        return booking
 
 
 class LoginSerializer(serializers.Serializer):
@@ -76,26 +64,24 @@ class LoginSerializer(serializers.Serializer):
         data['user'] = user
         return data
 
-from rest_framework import serializers
-from .models import Booking
 
-class BookingSerializer(serializers.ModelSerializer):
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
     class Meta:
-        model = Booking
-        fields = ['travel_date', 'ticket_class', 'seats']
+        model = User
+        fields = ['username', 'email', 'password']
 
+    def create(self, validated_data):
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data.get('email', ''),
+            password=validated_data['password']
+        )
+        return user
 
-from .models import Payment
 
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = ['phone_number']
-
-
-
-
-
-
-
-

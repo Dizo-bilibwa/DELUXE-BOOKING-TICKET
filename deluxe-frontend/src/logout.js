@@ -12,7 +12,7 @@ export default Logout;
 
 
 
-.then(res => {
+then(res => {
   if (res.status === 401) {
     localStorage.removeItem("token");
     window.location.href = "/login";
