@@ -5,7 +5,7 @@ import Booking from "./Booking";
 import ProtectedRoute from "./ProtectedRoute";
 import Navigation from "./components/Navigation";
 import { useEffect, useState } from "react";
-const API_BASE = process.env.REACT_APP_API_URL || "";
+const API_BASE = process.env.REACT_APP_API_URL || "https://deluxe-booking-ticket-4-dmst.onrender.com";
 
 function RoutesList() {
   const [routes, setRoutes] = useState([]);

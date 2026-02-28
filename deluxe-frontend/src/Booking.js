@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Payment from "./Payment";
-const API_BASE = process.env.REACT_APP_API_URL || "";
+const API_BASE = process.env.REACT_APP_API_URL || "https://deluxe-booking-ticket-4-dmst.onrender.com";
 
 function Booking() {
   const [travelDates, setTravelDates] = useState([]);
