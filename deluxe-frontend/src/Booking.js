@@ -14,6 +14,7 @@ function Booking() {
   const [loading, setLoading] = useState(false);
 
   const token = localStorage.getItem("token");
+  const tokenType = localStorage.getItem("token_type") || "Bearer";
 
   // Fetch travel dates
   useEffect(() => {
@@ -62,7 +63,7 @@ function Booking() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
+        "Authorization": `${tokenType} ${token}`
       },
       body: JSON.stringify({
         travel_date: travelDate,

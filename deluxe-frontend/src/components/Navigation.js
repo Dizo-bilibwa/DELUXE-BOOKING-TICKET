@@ -15,6 +15,8 @@ function Navigation() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("refresh");
+    localStorage.removeItem("token_type");
     localStorage.removeItem("username");
     setIsLoggedIn(false);
     navigate("/login");

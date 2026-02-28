@@ -9,7 +9,20 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = () => {
+  const extractErrorMessage = async (res) => {
+    try {
+      const data = await res.json();
+      if (typeof data?.detail === "string") return data.detail;
+      if (typeof data?.non_field_errors?.[0] === "string") return data.non_field_errors[0];
+      if (typeof data?.username?.[0] === "string") return data.username[0];
+      if (typeof data?.password?.[0] === "string") return data.password[0];
+    } catch (e) {
+      // ignore JSON parse errors and fall back to generic message
+    }
+    return "Login failed. Please check your username and password.";
+  };
+
+  const handleLogin = async () => {
     if (!username || !password) {
       setMessage("Please enter both username and password");
       return;
@@ -18,39 +31,55 @@ function Login() {
     setLoading(true);
     setMessage("");
 
-    fetch(`${API_BASE}/api/token/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    })
-      .then(res => {
-        if (!res.ok) {
-          throw new Error("Login failed");
-        }
-        return res.json();
-      })
-      .then(data => {
-        console.log("Login response:", data);
-        // JWT returns "access" and "refresh" tokens
-        if (data.access) {
-          localStorage.setItem("token", data.access);
-          localStorage.setItem("refresh", data.refresh);
+    try {
+      const jwtResponse = await fetch(`${API_BASE}/api/token/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (jwtResponse.ok) {
+        const jwtData = await jwtResponse.json();
+        if (jwtData.access) {
+          localStorage.setItem("token", jwtData.access);
+          localStorage.setItem("refresh", jwtData.refresh || "");
+          localStorage.setItem("token_type", "Bearer");
           localStorage.setItem("username", username);
           alert("Login successful!");
           navigate("/booking");
-        } else if (data.detail) {
-          setMessage(data.detail);
-        } else {
-          setMessage("Login failed. Please check your credentials.");
+          return;
         }
-      })
-      .catch(error => {
-        console.error("Login error:", error);
-        setMessage("Login failed. Please check your credentials or make sure the backend is running.");
-      })
-      .finally(() => {
-        setLoading(false);
+      }
+
+      // Fallback for legacy login endpoint that returns DRF token auth key
+      const legacyResponse = await fetch(`${API_BASE}/api/login/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
       });
+
+      if (legacyResponse.ok) {
+        const legacyData = await legacyResponse.json();
+        if (legacyData.token) {
+          localStorage.setItem("token", legacyData.token);
+          localStorage.removeItem("refresh");
+          localStorage.setItem("token_type", "Token");
+          localStorage.setItem("username", username);
+          alert("Login successful!");
+          navigate("/booking");
+          return;
+        }
+      }
+
+      const jwtMessage = await extractErrorMessage(jwtResponse);
+      const legacyMessage = await extractErrorMessage(legacyResponse);
+      setMessage(jwtMessage === "Login failed. Please check your username and password." ? legacyMessage : jwtMessage);
+    } catch (error) {
+      console.error("Login error:", error);
+      setMessage("Cannot reach backend API. If frontend is on Vercel, set REACT_APP_API_URL to your Django backend URL.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // If already logged in, redirect to booking
