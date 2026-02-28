@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 const API_BASE = process.env.REACT_APP_API_URL || "";
+const IS_LOCALHOST = typeof window !== "undefined" && window.location.hostname === "localhost";
 
 function Register() {
   const [username, setUsername] = useState("");
@@ -29,8 +30,17 @@ function Register() {
       body: JSON.stringify({ username, password, email }),
     });
 
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      setErrors({
+        non_field_errors: !API_BASE && !IS_LOCALHOST
+          ? ["Backend API is not configured on Vercel. Set REACT_APP_API_URL to your Django backend URL and redeploy."]
+          : ["Registration failed: unexpected API response."]
+      });
+      return;
+    }
+
     const data = await response.json();
-    console.log(data);
 
     if (response.ok) {
       alert("Registration successful! Please login.");
@@ -96,6 +106,13 @@ function Register() {
         <button onClick={handleRegister} style={styles.button}>
           Register
         </button>
+        {errors.non_field_errors && (
+          <span style={styles.error}>
+            {Array.isArray(errors.non_field_errors)
+              ? errors.non_field_errors[0]
+              : errors.non_field_errors}
+          </span>
+        )}
         <p style={styles.text}>
           Already have an account? <a href="/login">Login here</a>
         </p>

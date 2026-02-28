@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 const API_BASE = process.env.REACT_APP_API_URL || "";
+const IS_LOCALHOST = typeof window !== "undefined" && window.location.hostname === "localhost";
 
 function Login() {
   const [username, setUsername] = useState("");
@@ -10,6 +11,13 @@ function Login() {
   const navigate = useNavigate();
 
   const extractErrorMessage = async (res) => {
+    if (!res) return "Login failed. Please check your username and password.";
+    const contentType = res.headers.get("content-type") || "";
+    const looksLikeHtml = contentType.includes("text/html");
+    if (looksLikeHtml || (res.status === 404 && !API_BASE && !IS_LOCALHOST)) {
+      return "Backend API is not configured on Vercel. Set REACT_APP_API_URL to your Django backend URL and redeploy.";
+    }
+
     try {
       const data = await res.json();
       if (typeof data?.detail === "string") return data.detail;
