@@ -170,7 +170,7 @@ class PaymentView(APIView):
         booking = get_object_or_404(Booking, id=booking_id, user=request.user)
         serializer = PaymentSerializer(data=request.data)
         if serializer.is_valid():
-            payment = serializer.save(
+            payment = Payment.objects.create(
                 booking=booking,
                 amount=booking.total_amount,
                 status="PROCESSING"

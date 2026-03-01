@@ -81,7 +81,5 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
-class PaymentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Payment
-        fields = ['phone_number']
+class PaymentSerializer(serializers.Serializer):
+    phone_number = serializers.CharField(max_length=20)
