@@ -1,1 +1,1 @@
-web: uvicorn deluxeproject.asgi:application --host 0.0.0.0 --port $PORT
+web: gunicorn DELUXEBOOKINGTICKET.wsgi:application

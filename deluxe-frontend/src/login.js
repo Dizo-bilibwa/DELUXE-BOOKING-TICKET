@@ -20,6 +20,9 @@ function Login() {
 
     try {
       const data = await res.json();
+      if (typeof data?.detail === "string" && data.detail.includes("No active account found")) {
+        return "No account found in production for these credentials. Register again on the live site, then login with your username (not email).";
+      }
       if (typeof data?.detail === "string") return data.detail;
       if (typeof data?.non_field_errors?.[0] === "string") return data.non_field_errors[0];
       if (typeof data?.username?.[0] === "string") return data.username[0];

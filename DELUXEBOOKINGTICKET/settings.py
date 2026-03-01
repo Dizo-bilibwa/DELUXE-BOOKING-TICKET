@@ -5,14 +5,24 @@ Django settings for DELUXEBOOKINGTICKET project.
 import os
 from pathlib import Path
 from datetime import timedelta
+from django.core.exceptions import ImproperlyConfigured
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-2d-#pgzk$^(z&2qe#v4jc6@6^4i#ts)usu999x_h)nr(r1ce2)'
+SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-dev-secret-key")
 
-DEBUG = False
+DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
-ALLOWED_HOSTS = ["*"]
+RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip()
+raw_allowed_hosts = os.getenv("ALLOWED_HOSTS", "")
+ALLOWED_HOSTS = [host.strip() for host in raw_allowed_hosts.split(",") if host.strip()]
+if not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+if os.getenv("RENDER", "").lower() == "true" and SECRET_KEY == "unsafe-dev-secret-key":
+    raise ImproperlyConfigured("Set a strong SECRET_KEY in production.")
 
 INSTALLED_APPS = [
     'corsheaders',
@@ -58,13 +68,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'DELUXEBOOKINGTICKET.wsgi.application'
 
-# Use SQLite for local development
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+    if os.getenv("RENDER", "").lower() == "true":
+        raise ImproperlyConfigured(
+            "Render deployment requires PostgreSQL. Set DATABASE_URL to your Render Postgres connection string."
+        )
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -92,7 +115,16 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-CORS_ALLOW_ALL_ORIGINS = True
+raw_cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in raw_cors_origins.split(",") if origin.strip()]
+CORS_ALLOW_ALL_ORIGINS = DEBUG and not CORS_ALLOWED_ORIGINS
+
+CSRF_TRUSTED_ORIGINS = []
+if RENDER_EXTERNAL_HOSTNAME:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
+frontend_url = os.getenv("FRONTEND_URL", "").strip()
+if frontend_url:
+    CSRF_TRUSTED_ORIGINS.append(frontend_url)
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "core" / "static"]
