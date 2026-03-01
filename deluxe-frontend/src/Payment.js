@@ -11,7 +11,7 @@ function Payment({ bookingId, amount, ticketNumber }) {
   const token = localStorage.getItem("token");
   const tokenType = localStorage.getItem("token_type") || "Bearer";
 
-  const handlePay = () => {
+  const handlePay = async () => {
     if (!phone) {
       setMessage("Please enter your phone number");
       setMessageType("error");
@@ -21,38 +21,53 @@ function Payment({ bookingId, amount, ticketNumber }) {
     setLoading(true);
     setMessage("");
 
-    fetch(`${API_BASE}/api/pay/${bookingId}/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `${tokenType} ${token}`
-      },
-      body: JSON.stringify({
-        phone_number: phone
-      })
-    })
-      .then(res => res.json())
-      .then(data => {
-        console.log("Payment response:", data);
-        if (data.status === "SUCCESS") {
-          setMessage("Payment Successful! You can now download your ticket.");
-          setMessageType("success");
-          setPaymentStatus("SUCCESS");
-        } else {
-          setMessage(data.message || "Payment Failed. Please try again.");
-          setMessageType("error");
-          setPaymentStatus("FAILED");
-        }
-      })
-      .catch(error => {
-        console.error("Payment error:", error);
-        setMessage("Network error. Please make sure the backend is running.");
+    try {
+      const res = await fetch(`${API_BASE}/api/pay/${bookingId}/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `${tokenType} ${token}`
+        },
+        body: JSON.stringify({
+          phone_number: phone
+        })
+      });
+
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (e) {
+        data = {};
+      }
+
+      if (!res.ok) {
+        const errMsg =
+          data?.detail ||
+          data?.message ||
+          "Payment failed. Please check your input and try again.";
+        setMessage(errMsg);
         setMessageType("error");
         setPaymentStatus("FAILED");
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+        return;
+      }
+
+      if (data.status === "SUCCESS") {
+        setMessage("Payment Successful! You can now download your ticket.");
+        setMessageType("success");
+        setPaymentStatus("SUCCESS");
+      } else {
+        setMessage(data.message || "Payment Failed. Please try again.");
+        setMessageType("error");
+        setPaymentStatus("FAILED");
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      setMessage("Network error. Please make sure the backend is running.");
+      setMessageType("error");
+      setPaymentStatus("FAILED");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDownloadPDF = () => {

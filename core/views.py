@@ -20,6 +20,7 @@ from .serializers import LoginSerializer, RegisterSerializer
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics
+from django.shortcuts import get_object_or_404
 
 
 def trains_list(request):
@@ -165,7 +166,8 @@ class PaymentView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, booking_id):
-        booking = Booking.objects.get(id=booking_id)
+        # Ensure user can only pay for their own booking.
+        booking = get_object_or_404(Booking, id=booking_id, user=request.user)
         serializer = PaymentSerializer(data=request.data)
         if serializer.is_valid():
             payment = serializer.save(
@@ -179,5 +181,5 @@ class PaymentView(APIView):
             return Response({
                 "message": "Payment successful",
                 "status": payment.status
-            })
-        return Response(serializer.errors, status=400)
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
