@@ -83,3 +83,15 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 class PaymentSerializer(serializers.Serializer):
     phone_number = serializers.CharField(max_length=20)
+
+    def validate_phone_number(self, value):
+        phone_number = value.strip().replace(" ", "")
+        normalized = phone_number[1:] if phone_number.startswith("+") else phone_number
+
+        if not normalized.isdigit():
+            raise serializers.ValidationError("Phone number must contain digits only.")
+
+        if len(normalized) < 10 or len(normalized) > 15:
+            raise serializers.ValidationError("Enter a valid phone number with 10 to 15 digits.")
+
+        return phone_number

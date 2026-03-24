@@ -7,6 +7,9 @@ function Payment({ bookingId, amount, ticketNumber }) {
   const [messageType, setMessageType] = useState(""); // "success" or "error"
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState(
+    `${API_BASE}/api/ticket/pdf/${ticketNumber}/`
+  );
 
   const token = localStorage.getItem("token");
   const tokenType = localStorage.getItem("token_type") || "Bearer";
@@ -42,6 +45,7 @@ function Payment({ bookingId, amount, ticketNumber }) {
 
       if (!res.ok) {
         const errMsg =
+          data?.phone_number?.[0] ||
           data?.detail ||
           data?.message ||
           "Payment failed. Please check your input and try again.";
@@ -52,7 +56,10 @@ function Payment({ bookingId, amount, ticketNumber }) {
       }
 
       if (data.status === "SUCCESS") {
-        setMessage("Payment Successful! You can now download your ticket.");
+        if (data.ticket_pdf_url) {
+          setDownloadUrl(`${API_BASE}${data.ticket_pdf_url}`);
+        }
+        setMessage(data.message || "Payment Successful! You can now download your ticket.");
         setMessageType("success");
         setPaymentStatus("SUCCESS");
       } else {
@@ -70,9 +77,40 @@ function Payment({ bookingId, amount, ticketNumber }) {
     }
   };
 
-  const handleDownloadPDF = () => {
-    // Open PDF in new tab
-    window.open(`${API_BASE}/api/ticket/pdf/${ticketNumber}/`, '_blank');
+  const handleDownloadPDF = async () => {
+    try {
+      const res = await fetch(downloadUrl, {
+        headers: {
+          "Authorization": `${tokenType} ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (e) {
+          data = {};
+        }
+        setMessage(data?.detail || "Unable to download ticket PDF.");
+        setMessageType("error");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `ticket_${ticketNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Ticket download error:", error);
+      setMessage("Unable to download ticket PDF right now.");
+      setMessageType("error");
+    }
   };
 
   // Success view - shows after successful payment
@@ -204,7 +242,7 @@ function Payment({ bookingId, amount, ticketNumber }) {
       </button>
 
       <p style={{ fontSize: "12px", color: "#666", marginTop: "15px", textAlign: "center" }}>
-        Payment is simulated. Click "Pay Now" to complete the booking.
+        Payment is currently simulated. A real mobile-money gateway is not connected yet.
       </p>
     </div>
   );

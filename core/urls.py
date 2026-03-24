@@ -3,7 +3,7 @@ from .views import trains_list
 from .views import RegisterView
 from .views import BookingView
 from .views import CreateBookingView
-from .views import download_ticket_pdf
+from .views import DownloadTicketPDFView
 from .views import PaymentView
 from .views import trains_list, routes_list, travel_dates, ticket_classes
 from .views import api_routes, api_trains
@@ -25,5 +25,5 @@ urlpatterns = [
     path('pay/<int:booking_id>/', PaymentView.as_view(), name='payment'),
     
     # Ticket
-    path('ticket/pdf/<str:ticket_number>/', download_ticket_pdf, name='ticket-pdf'),
+    path('ticket/pdf/<str:ticket_number>/', DownloadTicketPDFView.as_view(), name='ticket-pdf'),
 ]
