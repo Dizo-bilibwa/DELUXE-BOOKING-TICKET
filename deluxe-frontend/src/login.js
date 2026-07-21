@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 const API_BASE = process.env.REACT_APP_API_URL || "https://deluxe-booking-ticket-4-dmst.onrender.com";
 const IS_LOCALHOST = typeof window !== "undefined" && window.location.hostname === "localhost";
 
@@ -95,8 +95,7 @@ function Login() {
 
   // If already logged in, redirect to booking
   if (localStorage.getItem("token")) {
-    navigate("/booking");
-    return null;
+    return <Navigate to="/booking" replace />;
   }
 
   return (

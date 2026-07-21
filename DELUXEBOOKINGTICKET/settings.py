@@ -13,9 +13,9 @@ import dj_database_url
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-dev-secret-key")
-# DEBUG = os.getenv("DEBUG", "True").lower() == "true"
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip()
+RAILWAY_PUBLIC_DOMAIN = os.getenv("RAILWAY_PUBLIC_DOMAIN", "").strip()
 
 raw_allowed_hosts = os.getenv("ALLOWED_HOSTS", "")
 ALLOWED_HOSTS = [h.strip() for h in raw_allowed_hosts.split(",") if h.strip()]
@@ -23,8 +23,14 @@ if not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+if RAILWAY_PUBLIC_DOMAIN and RAILWAY_PUBLIC_DOMAIN not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RAILWAY_PUBLIC_DOMAIN)
 
-if os.getenv("RENDER", "").lower() == "true" and SECRET_KEY == "unsafe-dev-secret-key":
+is_production = (
+    os.getenv("RENDER", "").lower() == "true"
+    or bool(os.getenv("RAILWAY_ENVIRONMENT"))
+)
+if is_production and SECRET_KEY == "unsafe-dev-secret-key":
     raise ImproperlyConfigured("Set a strong SECRET_KEY in production.")
 
 INSTALLED_APPS = [
@@ -89,9 +95,9 @@ else:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
-    if os.getenv("RENDER", "").lower() == "true":
+    if is_production:
         raise ImproperlyConfigured(
-            "Render deployment requires PostgreSQL. Set DATABASE_URL to your Render Postgres connection string."
+            "Production deployment requires PostgreSQL. Set DATABASE_URL to your database connection string."
         )
 
 AUTH_PASSWORD_VALIDATORS = [

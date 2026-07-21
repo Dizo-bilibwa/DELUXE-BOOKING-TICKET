@@ -8,6 +8,7 @@ function Register() {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleRegister = async () => {
@@ -22,32 +23,41 @@ function Register() {
       return;
     }
 
-    const response = await fetch(`${API_BASE}/api/register/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ username, password, email }),
-    });
-
-    const contentType = response.headers.get("content-type") || "";
-    if (!contentType.includes("application/json")) {
-      setErrors({
-        non_field_errors: !API_BASE && !IS_LOCALHOST
-          ? ["Backend API is not configured on Vercel. Set REACT_APP_API_URL to your Django backend URL and redeploy."]
-          : ["Registration failed: unexpected API response."]
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/register/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password, email }),
       });
-      return;
-    }
 
-    const data = await response.json();
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        setErrors({
+          non_field_errors: !API_BASE && !IS_LOCALHOST
+            ? ["Backend API is not configured on Vercel. Set REACT_APP_API_URL to your Django backend URL and redeploy."]
+            : ["Registration failed: unexpected API response."]
+        });
+        return;
+      }
 
-    if (response.ok) {
-      alert("Registration successful! Please login.");
-      navigate("/login");
-    } else {
-      // Display errors inline from the API response
-      setErrors(data);
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("Registration successful! Please login.");
+        navigate("/login");
+      } else {
+        // Display errors inline from the API response
+        setErrors(data);
+      }
+    } catch (error) {
+      setErrors({
+        non_field_errors: ["Cannot reach the registration service. Please try again later."]
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -103,8 +113,8 @@ function Register() {
             </span>
           )}
         </div>
-        <button onClick={handleRegister} style={styles.button}>
-          Register
+        <button onClick={handleRegister} disabled={loading} style={styles.button}>
+          {loading ? "Registering..." : "Register"}
         </button>
         {errors.non_field_errors && (
           <span style={styles.error}>
